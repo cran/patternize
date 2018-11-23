@@ -12,16 +12,20 @@
 #'
 #' @section patternize main functions:
 #'
-#' The package has four main functions depending on how you want the alignment of the iamges and
+#' The package has six main functions depending on how you want the alignment of the iamges and
 #' the color extraction to be performed.
 #'
 #' \code{patLanRGB} \cr
-#'    Aligns images usings transformations obtained from fixed landmarks and extracts colors using
+#'    Aligns images by transformations obtained from fixed landmarks and extracts colors using
 #'    a predefined RGB values and cutoff value.
 #'
 #' \code{patLanK} \cr
-#'    Aligns images usings transformations obtained from fixed landmarks and extracts colors using
+#'    Aligns images by transformations obtained from fixed landmarks and extracts colors using
 #'    k-means clustering.
+#'
+#' \code{patLanW} \cr
+#'    Aligns images by transformations obtained from fixed landmarks and extracts color
+#'    patterns by watershed segmentation using \code{\link[imager]{imager}} utilities.
 #'
 #' \code{patRegRGB} \cr
 #'    Aligns images using \code{\link[RNiftyReg]{niftyreg}} utilities for automated image
@@ -31,6 +35,10 @@
 #'    Aligns images using \code{\link[RNiftyReg]{niftyreg}} utilities for automated image
 #'    registration and extracts colors using k-means clustering.
 #'
+#' \code{patRegW} \cr
+#'    Aligns images using \code{\link[RNiftyReg]{niftyreg}} utilities for automated image
+#'    registration and extracts color patterns by watershed segmentation using
+#'    \code{\link[imager]{imager}} utilities.
 #'
 #'
 #' @section patternize preprocessing functions:
@@ -41,6 +49,9 @@
 #' \code{makeList} \cr
 #'    This function returns a list of RasterStacks or a list of landmarks depending on the input
 #'    provided.
+#'
+#' \code{sampleLandmarks} \cr
+#'    Sample landmarks in an image.
 #'
 #' \code{lanArray} \cr
 #'    This function creates a landmark array as used by \code{\link[Morpho]{procSym}} in the
@@ -63,6 +74,12 @@
 #'    Component Analysis (\code{\link[stats]{prcomp}}). This function also allows to plot the
 #'    analysis including a visualization of the shape changes along the axis.
 #'
+#' \code{patRDA} \cr
+#'    This function transforms the individual color pattern rasters as obtained by the main
+#'    patternize functions to a dataframe of 0 and 1 values that can be used for constrained
+#'    Redundancy Analysis (\code{\link[vegan]{rda}}). This function also allows to plot the
+#'    analysis including a visualization of the shape changes along the axis.
+#'
 #' \code{patArea} \cr
 #'    This fucntion calculates the area in which the color pattern is expressed in each sample
 #'    as the relative proportion using the provided outline of the considered trait or structure.
@@ -77,6 +94,9 @@
 #' \code{kImage} \cr
 #'    Performs k-means clustering of images.
 #'
+#' \code{sampleRGB} \cr
+#'    Interactive function to sample RGB value from pixel or area in an image.
+#'
 #' \code{createTarget} \cr
 #'    Creates an artificial target images using a provided outline that can be used for image
 #'    registration (experimantal).
@@ -85,6 +105,8 @@
 #'    Intersects a RasterStack with an outline. Everything outside of the outline will be removed
 #'    from the raster.
 #'
+#' \code{colorChecker} \cr
+#'    Calibrate images using ColorChecker.
 #'
 #'
 #' @seealso
@@ -93,6 +115,7 @@
 #' \code{\link[Morpho]{procSym}},
 #' \code{\link[Morpho]{computeTransform}},
 #' \code{\link[RNiftyReg]{niftyreg}}
+#' \code{\link[imager]{imager}}
 #'
 #' \cite{Jon Clayden, Marc Modat, Benoit Presles, Thanasis Anthopoulos and Pankaj Daga (2017).
 #' RNiftyReg: Image Registration Using the 'NiftyReg' Library. R package version 2.5.0.
@@ -100,6 +123,9 @@
 #'
 #' \cite{Stefan Schlager (2016). Morpho: Calculations and Visualisations Related to Geometric
 #' Morphometrics. R package version 2.4.1.1. https://github.com/zarquon42b/Morpho} \cr
+#'
+#' \cite{Simon Barthelmé (2017). imager: Image processing library based on ‘CImg’. R package
+#' version 0.40.2. https://CRAN.R-project.org/package=imager} \cr
 #'
 #' @docType package
 #' @name patternize

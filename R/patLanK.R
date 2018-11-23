@@ -7,9 +7,10 @@
 #' @param resampleFactor Integer for downsampling used by \code{\link{redRes}}.
 #' @param crop Whether to use the landmarks range to crop the image. This can significantly speed
 #'    up the analysis (default = FALSE).
-#' @param cropOffset Vector c(xmin, xmax, ymin, ymax) that specifies the number of pixels you want
-#'    the cropping to be offset from the landmarks (in case the landmarks do not surround the entire
-#'    color pattern).
+#' @param cropOffset Vector c(xmin, xmax, ymin, ymax) that specifies the number of pixels you
+#'    want the cropping to be offset from the landmarks (in case the landmarks do not surround
+#'    the entire color pattern). The values specified should present the percentage of the maximum
+#'    landmark value along the x and y axis.
 #' @param res Resolution for color pattern raster (default = 300). This should be reduced if the
 #'    number of pixels in the image is lower than th raster.
 #' @param transformRef ID of reference sample for shape to which color patterns will be transformed
@@ -28,6 +29,7 @@
 #' @return  List of summed raster for each k-means cluster objects.
 #'
 #' @examples
+#' \dontrun{
 #' IDlist <- c('BC0077','BC0071','BC0050','BC0049','BC0004')
 #' prepath <- system.file("extdata",  package = 'patternize')
 #' extension <- '_landmarks_LFW.txt'
@@ -39,17 +41,19 @@
 #' # remove [1:2] to run a full examples.
 #' rasterList_lanK <- patLanK(imageList[1:2], landmarkList[1:2], k = 4, crop = TRUE,
 #' res = 100, removebgK = 100, adjustCoords = TRUE, plot = TRUE)
+#' }
 #'
 #' @export
-#' @import raster Morpho
+#' @import raster
 #' @importFrom utils capture.output
+#' @importFrom Morpho procSym computeTransform applyTransform
 
 patLanK <- function(sampleList,
                     landList,
                     k = 3,
                     resampleFactor = NULL,
                     crop = FALSE,
-                    cropOffset = NULL,
+                    cropOffset = c(0,0,0,0),
                     res = 300,
                     transformRef = 'meanshape',
                     transformType='tps',
@@ -73,6 +77,12 @@ patLanK <- function(sampleList,
 
   lanArray <- lanArray(landList, adjustCoords, sampleList)
 
+  if(is.matrix(transformRef)){
+
+    refShape <- transformRef
+
+  }
+
   if(transformRef == 'meanshape'){
 
     invisible(capture.output(transformed <- Morpho::procSym(lanArray)))
@@ -80,41 +90,38 @@ patLanK <- function(sampleList,
 
   }
 
-  else{
+  if(transformRef %in% names(landList)){
 
-    if(exists(landList[[transformRef]])){
-
-      e <- which(names(landList) == transformRef)
-      refShape <- lanArray[e]
-    }
-
-    else{
-      stop("specified ID for reference shape does not exist")
-    }
+    e <- which(names(landList) == transformRef)
+    refShape <- lanArray[e]
   }
+
 
   for(n in 1:length(sampleList)){
 
     image <- sampleList[[n]]
-    extRaster <- raster::extent(image)
-
-    if(crop){
-
-      landm <- lanArray[,,n]
-      extRaster <- raster::extent(min(landm[,1]), max(landm[,1]), min(landm[,2]), max(landm[,2]))
-
-      if(!is.null(cropOffset)){
-
-        extRaster <- raster::extent(min(landm[,1])-cropOffset[1], max(landm[,1])+cropOffset[2], min(landm[,2])-cropOffset[3], max(landm[,2])+cropOffset[4])
-
-      }
-
-      image <- raster::crop(image, extRaster)
-    }
+    extRasterOr <- raster::extent(image)
 
     if(!is.null(resampleFactor)){
       image <- redRes(image, resampleFactor)
     }
+
+    if(crop){
+
+      landm <- lanArray[,,n]
+      extRaster <- raster::extent(min(landm[,1])-min(landm[,1])*cropOffset[1]/100,
+                                  max(landm[,1])+max(landm[,1])*cropOffset[2]/100,
+                                  min(landm[,2])-min(landm[,2])*cropOffset[3]/100,
+                                  max(landm[,2])+max(landm[,2])*cropOffset[4]/100)
+
+
+      imageC <- raster::crop(image, extRaster)
+
+      y <- raster::raster(ncol = dim(image)[2], nrow = dim(image)[1])
+      extent(y) <- extRasterOr
+      image <- resample(imageC, y)
+    }
+
 
     if(focal){
       gf <- focalWeight(image, sigma, "Gauss")
@@ -148,6 +155,7 @@ patLanK <- function(sampleList,
       startCenter <- K$centers
     }
 
+    image[is.na(image)] <- 255
     imageKmeans <- kImage(raster::as.array(image), k, startCenter)
 
     image.segmented <- imageKmeans[[1]]
@@ -177,19 +185,22 @@ patLanK <- function(sampleList,
 
       map <- apply(image.segmented, 1:2, function(x) all(x-rgb == 0))
       mapR <- raster::raster(map)
-      raster::extent(mapR) <- extRaster
+      raster::extent(mapR) <- extRasterOr
 
       mapDF <- raster::as.data.frame(mapR, xy = TRUE)
 
       mapDFs <- subset(mapDF, mapDF$layer == TRUE)
 
-      invisible(capture.output(transMatrix <- Morpho::computeTransform(refShape, lanArray[,,n], type = transformType)))
+      invisible(capture.output(transMatrix <- Morpho::computeTransform(refShape, as.matrix(lanArray[,,n]), type = transformType)))
 
       invisible(capture.output(mapTransformed <- Morpho::applyTransform(as.matrix(mapDFs[1:2]), transMatrix)))
 
       r <- raster::raster(ncol = res, nrow = res)
 
-      raster::extent(r) <- extent(min(refShape[,1])*1.4,max(refShape[,1])*1.4,min(refShape[,2])*1.4,max(refShape[,2])*1.4)
+      raster::extent(r) <- raster::extent(min(refShape[,1])-3*max(refShape[,1])*cropOffset[1]/100,
+                                          max(refShape[,1])+3*max(refShape[,1])*cropOffset[2]/100,
+                                          min(refShape[,2])-3*max(refShape[,2])*cropOffset[3]/100,
+                                          max(refShape[,2])+3*max(refShape[,2])*cropOffset[4]/100)
 
       patternRaster <- raster::rasterize(mapTransformed, field = 1, r)
 

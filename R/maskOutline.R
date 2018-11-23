@@ -48,7 +48,13 @@ maskOutline <-function(RasterStack,
                        imageList = NULL,
                        maskColor = 0){
 
-  imageEx <- raster::extent(RasterStack)
+  if(is.list(imageList)){
+
+    imageEx <- raster::extent(imageList[[1]])
+  }
+  else{
+    imageEx <- raster::extent(imageList)
+  }
 
   if(!is.null(flipOutline) || !is.null(flipRaster)){
 
@@ -113,8 +119,6 @@ maskOutline <-function(RasterStack,
 
     invisible(capture.output(cartoonLandTrans <- Morpho::computeTransform(transformed$mshape,
                                                                           as.matrix(landArray[,,indx]), type="tps")))
-    outline <- Morpho::applyTransform(as.matrix(outline), cartoonLandTrans)
-
 
     if(!is.null(flipOutline)){
 
@@ -125,10 +129,20 @@ maskOutline <-function(RasterStack,
       }
 
       if(flipOutline == 'y'){
-        outlineTrans[,2] = imageEx[4] - outlineTrans[,2] + imageEx[3]
+        outline[,2] = imageEx[4] - outline[,2] + imageEx[3]
+
+      }
+
+      if(flipOutline == 'xy'){
+        outline[,1] = imageEx[2] - outline[,1] + imageEx[1]
+        outline[,2] = imageEx[4] - outline[,2] + imageEx[3]
 
       }
     }
+
+    outline <- Morpho::applyTransform(as.matrix(outline), cartoonLandTrans)
+
+
   }
 
 

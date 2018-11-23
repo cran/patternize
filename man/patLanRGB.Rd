@@ -5,10 +5,11 @@
 \title{Aligns images usings transformations obtained from fixed landmarks and extracts colors
 using a predefined RGB values and cutoff value.}
 \usage{
-patLanRGB(sampleList, landList, RGB, resampleFactor = NULL, colOffset = 0,
-  crop = FALSE, cropOffset = NULL, res = 300,
-  transformRef = "meanshape", transformType = "tps", adjustCoords = FALSE,
-  plot = FALSE, focal = FALSE, sigma = 3, iterations = 0)
+patLanRGB(sampleList, landList, RGB, resampleFactor = NULL,
+  colOffset = 0.1, crop = FALSE, cropOffset = c(0, 0, 0, 0),
+  res = 300, transformRef = "meanshape", transformType = "tps",
+  adjustCoords = FALSE, plot = NULL, focal = FALSE, sigma = 3,
+  iterations = 0)
 }
 \arguments{
 \item{sampleList}{List of RasterStack objects.}
@@ -19,14 +20,15 @@ patLanRGB(sampleList, landList, RGB, resampleFactor = NULL, colOffset = 0,
 
 \item{resampleFactor}{Integer for downsampling used by \code{\link{redRes}}.}
 
-\item{colOffset}{Color offset for color pattern extraction (default = 0).}
+\item{colOffset}{Color offset for color pattern extraction (default = 0.10).}
 
-\item{crop}{Whether to use the landmarks range to crop the image. This can significantly
-speed up the analysis (default = FALSE).}
+\item{crop}{Whether to use the landmarks range to crop the image. This can speed up the
+analysis (default = FALSE).}
 
 \item{cropOffset}{Vector c(xmin, xmax, ymin, ymax) that specifies the number of pixels you
 want the cropping to be offset from the landmarks (in case the landmarks do not surround
-the entire color pattern).}
+the entire color pattern). The values specified should present the percentage of the maximum
+landmark value along the x and y axis.}
 
 \item{res}{Resolution for color pattern raster (default = 300). This should be reduced if
 the number of pixels in the image is lower than th raster.}
@@ -40,7 +42,9 @@ to. Can be 'meanshape' for transforming to mean shape of Procrustes analysis.}
 \item{adjustCoords}{Adjust landmark coordinates in case they are reversed compared to pixel
 coordinates (default = FALSE).}
 
-\item{plot}{Whether to plot transformed color patterns while processing (default = FALSE).}
+\item{plot}{Whether to plot transformed color patterns while processing (default = NULL).
+Transformed color patterns can be plot on top of each other ('stack') or next to the
+original image for each sample ('compare').}
 
 \item{focal}{Whether to perform Gaussian blurring (default = FALSE).}
 
@@ -56,6 +60,8 @@ Aligns images usings transformations obtained from fixed landmarks and extracts 
 using a predefined RGB values and cutoff value.
 }
 \examples{
+
+\dontrun{
 IDlist <- c('BC0077','BC0071','BC0050','BC0049','BC0004')
 prepath <- system.file("extdata",  package = 'patternize')
 extension <- '_landmarks_LFW.txt'
@@ -67,6 +73,7 @@ imageList <- makeList(IDlist, 'image', prepath, extension)
 
 RGB <- c(114,17,0)
 rasterList_lanRGB <- patLanRGB(imageList, landmarkList, RGB,
-colOffset = 0.15, crop = TRUE, res = 100, adjustCoords = TRUE, plot = TRUE)
+colOffset = 0.15, crop = TRUE, res = 100, adjustCoords = TRUE, plot = 'stack')
+}
 
 }

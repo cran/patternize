@@ -6,9 +6,9 @@
 and extracts colors using a predefined RGB values and cutoff value.}
 \usage{
 patRegRGB(sampleList, target, RGB, resampleFactor = NULL,
-  useBlockPercentage = 75, colOffset = 0, crop = c(0, 0, 0, 0),
-  removebgR = NULL, maskOutline = NULL, plot = FALSE, focal = FALSE,
-  sigma = 3, iterations = 0)
+  useBlockPercentage = 75, colOffset = 0.1, crop = c(0, 0, 0, 0),
+  removebgR = NULL, maskOutline = NULL, plot = FALSE,
+  focal = FALSE, sigma = 3, iterations = 0)
 }
 \arguments{
 \item{sampleList}{List of RasterStack objects.}
@@ -22,7 +22,7 @@ patRegRGB(sampleList, target, RGB, resampleFactor = NULL,
 \item{useBlockPercentage}{Block percentage as used in \code{\link[RNiftyReg]{niftyreg}}
 (default = 75).}
 
-\item{colOffset}{Color offset for color pattern extraction (default = 0).}
+\item{colOffset}{Color offset for color pattern extraction (default = 0.10).}
 
 \item{crop}{Vector c(xmin, xmax, ymin, ymax) that specifies the pixel coordinates to crop the
 original image.}
@@ -34,13 +34,15 @@ remove a white background.}
 \item{maskOutline}{When outline is specified, everything outside of the outline will be masked for
 the color extraction (default = NULL).}
 
-\item{plot}{Whether to plot transformed color patterns while processing (default = FALSE).}
+\item{plot}{Whether to plot transformed color patterns while processing (default = FALSE).
+Transformed color patterns can be plot on top of each other ('stack') or next to the
+original image for each sample ('compare').}
 
 \item{focal}{Whether to perform Gaussian blurring (default = FALSE).}
 
 \item{sigma}{Size of sigma for Gaussian blurring (default = 3).}
 
-\item{iterations}{Number of iterations for recalculating average color (default = 0). If set the
+\item{iterations}{Number of iterations for recalculating average color (default = 0). If set, the
 RGB value for pattern extraction will be iteratively recalculated to be the average of the
 extracted area. This may improve extraction of distinct color pattern, but fail for more
 gradually distributed (in color space) patterns.}
@@ -66,6 +68,6 @@ RGB <- c(114,17,0)
 # Note that this example only aligns one image with the target,
 # remove [2] to run a full examples.
 rasterList_regRGB <- patRegRGB(imageList[2], target, RGB,
-colOffset= 0.15, crop = c(100,400,40,250), removebgR = 100, plot = TRUE)
+colOffset= 0.15, crop = c(100,400,40,250), removebgR = 100, plot = 'stack')
 
 }

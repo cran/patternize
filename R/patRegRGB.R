@@ -7,7 +7,7 @@
 #' @param resampleFactor Integer for downsampling used by \code{\link{redRes}} (default = NULL).
 #' @param useBlockPercentage Block percentage as used in \code{\link[RNiftyReg]{niftyreg}}
 #'    (default = 75).
-#' @param colOffset Color offset for color pattern extraction (default = 0).
+#' @param colOffset Color offset for color pattern extraction (default = 0.10).
 #' @param crop Vector c(xmin, xmax, ymin, ymax) that specifies the pixel coordinates to crop the
 #'    original image.
 #' @param removebgR Integer indicating the range RGB treshold to remove from image (e.g. 100 removes
@@ -16,9 +16,11 @@
 #' @param maskOutline When outline is specified, everything outside of the outline will be masked for
 #'    the color extraction (default = NULL).
 #' @param plot Whether to plot transformed color patterns while processing (default = FALSE).
+#'    Transformed color patterns can be plot on top of each other ('stack') or next to the
+#'    original image for each sample ('compare').
 #' @param focal Whether to perform Gaussian blurring (default = FALSE).
 #' @param sigma Size of sigma for Gaussian blurring (default = 3).
-#' @param iterations Number of iterations for recalculating average color (default = 0). If set the
+#' @param iterations Number of iterations for recalculating average color (default = 0). If set, the
 #'    RGB value for pattern extraction will be iteratively recalculated to be the average of the
 #'    extracted area. This may improve extraction of distinct color pattern, but fail for more
 #'    gradually distributed (in color space) patterns.
@@ -39,7 +41,7 @@
 #' # Note that this example only aligns one image with the target,
 #' # remove [2] to run a full examples.
 #' rasterList_regRGB <- patRegRGB(imageList[2], target, RGB,
-#' colOffset= 0.15, crop = c(100,400,40,250), removebgR = 100, plot = TRUE)
+#' colOffset= 0.15, crop = c(100,400,40,250), removebgR = 100, plot = 'stack')
 #'
 #' @export
 #' @import raster
@@ -49,7 +51,7 @@ patRegRGB <- function(sampleList,
                       RGB,
                       resampleFactor = NULL,
                       useBlockPercentage = 75,
-                      colOffset=0,
+                      colOffset=0.10,
                       crop = c(0,0,0,0),
                       removebgR = NULL,
                       maskOutline = NULL,
@@ -70,11 +72,11 @@ patRegRGB <- function(sampleList,
     target <- redRes(target, resampleFactor)
   }
 
-  target <- apply(raster::as.array(target), 1:2, mean)
+  targetA <- apply(raster::as.array(target), 1:2, mean)
 
   if(is.numeric(removebgR)){
 
-    target <- apply(target, 1:2, function(x) ifelse(x > removebgR, 0, x))
+    targetA <- apply(targetA, 1:2, function(x) ifelse(x > removebgR, 0, x))
   }
 
   for(n in 1:length(sampleList)){
@@ -88,7 +90,7 @@ patRegRGB <- function(sampleList,
       sStack <- crop(sStack, extRaster)
     }
 
-    sourceRaster <- sStack
+    sourceRaster <- redRes(sStack, 1)
 
     if(!is.null(resampleFactor)){
       sourceRaster <- redRes(sStack, resampleFactor)
@@ -114,51 +116,89 @@ patRegRGB <- function(sampleList,
       sourceRaster <- apply(sourceRaster, 1:2, function(x) ifelse(x > removebgR, 0, x))
     }
 
-    result <- RNiftyReg::niftyreg(sourceRaster, target, useBlockPercentage=useBlockPercentage)
+    result <- RNiftyReg::niftyreg(sourceRaster, targetA, useBlockPercentage=useBlockPercentage)
 
     map <- apply(raster::as.array(sourceRasterK), 1:2, function(x) all(abs(x-RGB) < colOffset*255))
 
-    x <- 1
-    while(x <= iterations){
-      x <- x + 1
-
-      mapRaster <- raster::raster(as.matrix(map))
-      extent(mapRaster) <- extRaster
-      mapRaster[mapRaster == 0] <- NA
-
-      mapMASK<-raster::mask(sourceRasterK, mapRaster)
-
-      RGB <- c(mean(na.omit(as.data.frame(mapMASK[[1]]))[,1]),
-               mean(na.omit(as.data.frame(mapMASK[[2]]))[,1]),
-               mean(na.omit(as.data.frame(mapMASK[[3]]))[,1]))
-
-      map <- apply(raster::as.array(sourceRasterK), 1:2, function(x) all(abs(x-RGB) < colOffset*255))
-
+    if(all(map == FALSE)){
+      warning("The RGB range does not seem to overlap with any of the RGB values in the image")
     }
 
-    transformedMap <- RNiftyReg::applyTransform(RNiftyReg::forward(result), map, interpolation=0)
-    transformedMapMatrix <- transformedMap[1:nrow(transformedMap),ncol(transformedMap):1]
-
-    transRaster <- raster::raster(transformedMapMatrix)
-    raster::extent(transRaster) <- extRaster
-
-    if(!is.null(maskOutline)){
-
-      transRaster <- maskOutline(transRaster, maskOutline, refShape = 'target', flipOutline = 'y', crop = crop)
+    if(iterations > 0){
+      if(all(map == FALSE)){
+        warning("Iterations can't be performed")
+      }
     }
-    transRaster[transRaster == 0] <- NA
 
-    if(plot){
+    if(!all(map == FALSE)){
 
-      if(n == 1){
-        plot(1, type="n", axes=F, xlab='', ylab='')
+      x <- 1
+      while(x <= iterations){
+        x <- x + 1
+
+        mapRaster <- raster::raster(as.matrix(map))
+        extent(mapRaster) <- extRaster
+        mapRaster[mapRaster == 0] <- NA
+
+        mapMASK<-raster::mask(sourceRasterK, mapRaster)
+
+        RGBnew <- c(mean(na.omit(as.data.frame(mapMASK[[1]]))[,1]),
+                 mean(na.omit(as.data.frame(mapMASK[[2]]))[,1]),
+                 mean(na.omit(as.data.frame(mapMASK[[3]]))[,1]))
+
+        map <- apply(raster::as.array(sourceRasterK), 1:2, function(x) all(abs(x-RGBnew) < colOffset*255))
+
       }
 
-      par(new=T)
-      raster::plot(transRaster, col=rgb(1,0,0,alpha=1/length(sampleList)),legend = FALSE)
+      transformedMap <- RNiftyReg::applyTransform(RNiftyReg::forward(result), map, interpolation=0)
+      transformedMapMatrix <- transformedMap[1:nrow(transformedMap),ncol(transformedMap):1]
+
+      transRaster <- raster::raster(transformedMapMatrix)
+      raster::extent(transRaster) <- extRaster
+
+      if(!is.null(maskOutline)){
+
+        transRaster <- maskOutline(transRaster, maskOutline, refShape = 'target', flipOutline = 'y', crop = crop,
+                                   imageList = sampleList)
+      }
+      transRaster[transRaster == 0] <- NA
+
     }
 
-    print(names(sampleList)[n])
+    else{
+      transRaster <- raster::raster(extRaster, nrow=dim(sStack)[1], ncol=dim(sStack)[2], vals = rep(NA, dim(sStack)[1]*dim(sStack)[2]))
+    }
+
+    if(!identical(raster::extent(transRaster), raster::extent(target))){
+      raster::extent(transRaster) <- raster::extent(target)
+    }
+
+    if(plot == 'stack'){
+
+      par(mfrow=c(1,1))
+      if(n == 1){
+        plot(1, type="n", axes = FALSE, xlab='', ylab='')
+      }
+
+      par(new = TRUE)
+      raster::plot(transRaster, col=rgb(1,0,0,alpha=1/length(sampleList)), legend = FALSE)
+    }
+
+    if(plot == 'compare'){
+
+      par(mfrow=c(1,2))
+      plot(1, type="n", xlab='', ylab='', xaxt='n', yaxt='n', axes= FALSE, bty='n')
+      par(new = TRUE)
+      plot(raster::flip(transRaster,'x'), col='black', legend = FALSE, xaxt='n', yaxt='n', axes= FALSE, bty='n')
+
+      x <- as.array(sStack)/255
+      cols <- rgb(x[,,1], x[,,2], x[,,3], maxColorValue=1)
+      uniqueCols <- unique(cols)
+      x2 <- match(cols, uniqueCols)
+      dim(x2) <- dim(x)[1:2]
+      raster::image(t(apply(x2, 2, rev)), col=uniqueCols, yaxt='n', xaxt='n')
+
+    }
 
     rasterList[[names(sampleList)[n]]] <- transRaster
 

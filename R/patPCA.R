@@ -7,9 +7,15 @@
 #' set to zero except for the PC value for which we want to predict the pixel values.
 #'
 #' @param rList List of raster objects.
-#' @param popList List of vectors including sampleIDs for eacht population.
+#' @param popList List of vectors including sampleIDs for each population.
 #' @param colList List of colors for each population.
-#' @param plot Whether to plot the PCA analysis.
+#' @param symbolList List with graphical plotting symbols (default = NULL).
+#' @param rListPredict List of raster objects to predict into PCA space (default = NULL).
+#' @param popListPredict List of vectors including sampleIDs for each set of predict samples
+#' (default = NULL). Note to that this also has to be a list if only one population is included.
+#' @param colListPredict List of colors for each set of predict samples (default = NULL).
+#' @param symbolListPredict List with graphical plotting symbols for predict sets (default = NULL).
+#' @param plot Whether to plot the PCA analysis (default = FALSE).
 #' @param plotType Plot 'points' or sample 'labels' (default = 'points')
 #' @param plotChanges Wether to include plots of the changes along the PC axis (default = FALSE).
 #' @param PCx PC axis to be presented for x-axis (default PC1).
@@ -43,16 +49,16 @@
 #' @param cartoonFill Fill color for outline of cartoon (default = NULL).
 #' @param plotLandmarks Whether to plot the landmarks from the target image or mean shape
 #'    landmarks (default = FALSE).
-#' @param landCol Color for ploting landmarks (default = 'black').
+#' @param landCol Color for plotting landmarks (default = 'black').
 #' @param zlim z-axis limit (default = c(0,1))
 #' @param legendTitle Title of the raster legend (default = 'Proportion')
 #' @param xlab Optional x-axis label.
 #' @param ylab Optional y-axis label.
 #' @param main Optional main title.
 #'
-#' @return  List including a [1] dataframe of the binary raster values that can be used for
-#'    principle component analysis and [2] a dataframe of sample IDs and specified population
-#'    colors.
+#' @return  If plot = TRUE: List including a [1] dataframe of the binary raster values that can be used for
+#'    principle component analysis, [2] a dataframe of sample IDs and specified population
+#'    colors and [3] prcomp results. If plot = FALSE: prcomp result.
 #'
 #' @seealso \code{\link[stats]{prcomp}}
 #'
@@ -74,6 +80,11 @@
 patPCA <- function(rList,
                    popList,
                    colList,
+                   symbolList = NULL,
+                   rListPredict = NULL,
+                   popListPredict = NULL,
+                   colListPredict = NULL,
+                   symbolListPredict = NULL,
                    plot = FALSE,
                    plotType = 'points',
                    plotChanges = FALSE,
@@ -104,6 +115,10 @@ patPCA <- function(rList,
                    ylab='',
                    main=''){
 
+  # data for PCA
+  # make dataframe of rasters
+  print("making dataframe from rasters")
+
   for(r in 1:length(rList)){
 
     rList[[r]][is.na(rList[[r]])] <- 0
@@ -117,31 +132,116 @@ patPCA <- function(rList,
       rasDF <- cbind(rasDF, ras)
     }
   }
+
   groupCol <- c()
 
   for(p in 1:length(popList)){
 
     for(ind in 1:length(popList[[p]])){
 
+      if(!is.null(symbolList)){
+
+        groupCol <- rbind(groupCol, c(popList[[p]][ind], colList[p], symbolList[p]))
+      }
+
+      if(is.null(symbolList)){
+
         groupCol <- rbind(groupCol, c(popList[[p]][ind], colList[p]))
+      }
 
     }
   }
 
-  groupCol<-as.data.frame(groupCol)
-  colnames(groupCol) <- c('sampleID', 'col')
+  groupCol <- as.data.frame(groupCol)
+
+  if(!is.null(symbolList)){
+    colnames(groupCol) <- c('sampleID', 'col', 'symbol')
+  }
+  if(is.null(symbolList)){
+    colnames(groupCol) <- c('sampleID', 'col')
+  }
+
+  # PCA
+  print("calculating prcomp")
+
+  comp <- prcomp(t(rasDF))
+
+  pcdata <- comp$x
+  rotation <- comp$rotation
+
+  summ <- summary(comp)
+
+  xmin <- min(pcdata[,PCx])
+  xmax <- max(pcdata[,PCx])
+  ymin <- min(pcdata[,PCy])
+  ymax <- max(pcdata[,PCy])
+
+
+  # data for predict
+  if(!is.null(rListPredict)){
+    print("making dataframe for predict rasters")
+    for(r in 1:length(rListPredict)){
+
+      rListPredict[[r]][is.na(rListPredict[[r]])] <- 0
+      ras <- raster::as.data.frame(rListPredict[[r]])
+      colnames(ras) <- names(rListPredict)[[r]]
+
+      if(r == 1){
+        rasDFPredict <- ras
+      }
+      else{
+        rasDFPredict <- cbind(rasDFPredict, ras)
+      }
+    }
+
+
+    groupColPredict <- c()
+
+    for(p in 1:length(popListPredict)){
+
+      for(ind in 1:length(popListPredict[[p]])){
+
+        if(!is.null(symbolListPredict)){
+
+          groupColPredict <- rbind(groupColPredict, c(popListPredict[[p]][ind], colListPredict[p], symbolListPredict[p]))
+        }
+
+        if(is.null(symbolListPredict)){
+
+          groupColPredict <- rbind(groupColPredict, c(popListPredict[[p]][ind], colListPredict[p]))
+        }
+
+      }
+    }
+
+    groupColPredict <- as.data.frame(groupColPredict)
+
+    if(!is.null(symbolListPredict)){
+      colnames(groupColPredict) <- c('sampleID', 'col', 'symbol')
+    }
+    if(is.null(symbolListPredict)){
+      colnames(groupColPredict) <- c('sampleID', 'col')
+    }
+
+
+    # predict samples in PCA
+    predicted <- as.data.frame(predict(comp, t(rasDFPredict)))
+
+    xmin <- min(pcdata[,PCx], predicted[,PCx])
+    xmax <- max(pcdata[,PCx], predicted[,PCx])
+    ymin <- min(pcdata[,PCy], predicted[,PCy])
+    ymax <- max(pcdata[,PCy], predicted[,PCy])
+  }
+
+
+
+
 
 
   if(plot == TRUE){
 
-    comp <- prcomp(t(rasDF))
-
-    pcdata <- comp$x
-    rotation <- comp$rotation
-
-    summ <- summary(comp)
-
     if(plotChanges){
+      print("calculating changes")
 
       PCxmin <- min(pcdata[,PCx])
       PCxmax <- max(pcdata[,PCx])
@@ -189,43 +289,57 @@ patPCA <- function(rList,
       raster::extent(mapMay) <- raster::extent(rList[[1]])
     }
 
+    print("plotting")
+
+    if(plotChanges){
+      mat <- matrix(c(4,1,1,5,1,1,6,2,3), 3, 3, byrow = TRUE)
+      layout(mat, widths=c(1,1,1), heights=c(1,1,1))
+    }
+
     if(!plotChanges){
+      mat <- matrix(c(1,1,1,1,1,1,1,1,1), 3, 3, byrow = TRUE)
+      layout(mat, widths=c(1,1,1), heights=c(1,1,1))
+    }
 
-      if(plotType == 'points'){
+    if(plotType == 'points' && is.null(symbolList)){
 
-        plot(comp$x[,PCx:PCy], col=as.vector(groupCol$col), pch=20, cex=2)
+      plot(comp$x[,PCx:PCy], col=as.vector(groupCol$col), pch=20, cex=3,
+           xlim = c(xmin, xmax), ylim = c(ymin, ymax),
+           xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
+           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
+
+      if(!is.null(rListPredict)){
+        points(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), pch=20, cex=3)
+      }
+    }
+
+    if(plotType == 'points' && !is.null(symbolList)){
+
+      plot(comp$x[,PCx:PCy], col=as.vector(groupCol$col), pch=as.numeric(as.vector(groupCol$symbol)), cex=3,
+           xlim = c(xmin, xmax), ylim = c(ymin, ymax),
+           xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
+           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
+
+      if(!is.null(rListPredict)){
+        points(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), pch=as.numeric(as.vector(groupColPredict$symbol)), cex=3)
       }
 
-      if(plotType == 'labels'){
+    }
 
-        plot(comp$x[,PCx:PCy], col=NA, pch=19)
-        text(comp$x[,PCx:PCy], col=as.vector(groupCol$col), as.character(groupCol$sampleID))
+    if(plotType == 'labels'){
+
+      plot(comp$x[,PCx:PCy], col=NA, pch=19,
+           xlim = c(xmin, xmax), ylim = c(ymin, ymax),
+           xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
+           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
+      text(comp$x[,PCx], comp$x[,PCy], col=as.vector(groupCol$col), as.character(groupCol$sampleID))
+
+      if(!is.null(rListPredict)){
+        text(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), as.character(groupColPredict$sampleID))
       }
     }
 
     if(plotChanges){
-
-      mat <- matrix(c(4,5,6,1,1,2,1,1,3), 3)
-      layout(mat, widths=c(1,1,1), heights=c(1,1,1))
-
-
-      # par(mar=c(4,4,1,1))
-
-      if(plot == 'points'){
-
-        plot(comp$x[,PCx], comp$x[,PCy], col=as.vector(groupCol$col), pch=20, cex=3,
-             xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
-             ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
-      }
-
-      if(plot == 'labels'){
-
-        plot(comp$x[,PCx], comp$x[,PCy], col=NA, pch=19,
-             xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
-             ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
-
-        text(comp$x[,PCx], comp$x[,PCy], col=as.vector(groupCol$col), as.character(groupCol$sampleID))
-      }
 
       if(is.null(colpalette)){
 
@@ -279,14 +393,18 @@ patPCA <- function(rList,
 
       colfunc <- colorRampPalette(colpalette)
 
-      plot(NULL, xlim=c(0,1), ylim=c(0,1), type="n", axes=F, xlab = '', ylab='')
+      plot(NULL, xlim=c(0,1), ylim=c(0,1), type="n", axes = FALSE, xlab = '', ylab='')
 
-      plot(mapMay, col=colfunc(21), zlim=c(-1,1), legend.only=T, legend.width=5, horizontal = TRUE,
-           smallplot=c(0.3, 1, 0.5, 0.6), legend.args=list(text=legendTitle, side=3, font=2, line=2.5, cex=1))
+      plot(mapMay, col=colfunc(21), zlim = c(-1,1), legend.only = TRUE, legend.width = 5, horizontal = TRUE,
+           smallplot = c(0.3, 1, 0.5, 0.6), legend.args = list(text=legendTitle, side = 3, font = 2, line = 2.5, cex = 1))
     }
+
+    return(list(t(rasDF), groupCol, comp))
   }
 
-  return(list(t(rasDF), groupCol))
+  else{
+    return(comp)
+  }
 }
 
 
