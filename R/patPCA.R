@@ -14,7 +14,10 @@
 #' @param popListPredict List of vectors including sampleIDs for each set of predict samples
 #' (default = NULL). Note to that this also has to be a list if only one population is included.
 #' @param colListPredict List of colors for each set of predict samples (default = NULL).
+#' @param pcaListPredict Points to plot within PCA space.
 #' @param symbolListPredict List with graphical plotting symbols for predict sets (default = NULL).
+#' @param pcaPopListPredict List of population symbols for plotting additional PCA values.
+#' @param pcaColPredict Color for additional PCA values.
 #' @param plot Whether to plot the PCA analysis (default = FALSE).
 #' @param plotType Plot 'points' or sample 'labels' (default = 'points')
 #' @param plotChanges Wether to include plots of the changes along the PC axis (default = FALSE).
@@ -32,6 +35,7 @@
 #' @param landList Landmark landmarkList.
 #' @param adjustCoords Adjust landmark coordinates.
 #' @param cartoonID ID of the sample for which the cartoon was drawn.
+#' @param refImage Image (RasterStack) used for target. Use raster::stack('filename').
 #' @param normalized Set this to true in case the summed rasters are already devided by the
 #'    sample number.
 #' @param crop Vector c(xmin, xmax, ymin, ymax) that specifies the pixel coordinates to crop
@@ -55,6 +59,7 @@
 #' @param xlab Optional x-axis label.
 #' @param ylab Optional y-axis label.
 #' @param main Optional main title.
+#' @param ... additional arguments for PCA plot function.
 #'
 #' @return  If plot = TRUE: List including a [1] dataframe of the binary raster values that can be used for
 #'    principle component analysis, [2] a dataframe of sample IDs and specified population
@@ -84,6 +89,9 @@ patPCA <- function(rList,
                    rListPredict = NULL,
                    popListPredict = NULL,
                    colListPredict = NULL,
+                   pcaListPredict = NULL,
+                   pcaPopListPredict = NULL,
+                   pcaColPredict = 'red',
                    symbolListPredict = NULL,
                    plot = FALSE,
                    plotType = 'points',
@@ -101,6 +109,7 @@ patPCA <- function(rList,
                    flipOutline = NULL,
                    imageList = NULL,
                    cartoonID = NULL,
+                   refImage = NULL,
                    colpalette = NULL,
                    normalized = NULL,
                    cartoonOrder = 'above',
@@ -113,7 +122,8 @@ patPCA <- function(rList,
                    legendTitle = 'Predicted',
                    xlab='',
                    ylab='',
-                   main=''){
+                   main='',
+                   ...){
 
   # data for PCA
   # make dataframe of rasters
@@ -233,6 +243,15 @@ patPCA <- function(rList,
     ymax <- max(pcdata[,PCy], predicted[,PCy])
   }
 
+  if(!is.null(pcaListPredict)){
+    points(pcaListPredict[,c(PCx,PCy)], col = pcaColPredict, pch = pcaPopListPredict, cex=3)
+
+    xmin <- min(pcaListPredict[,PCx], xmin)
+    xmax <- max(pcaListPredict[,PCx], xmax)
+    ymin <- min(pcaListPredict[,PCy], ymin)
+    ymax <- max(pcaListPredict[,PCy], ymax)
+  }
+
 
 
 
@@ -303,39 +322,43 @@ patPCA <- function(rList,
 
     if(plotType == 'points' && is.null(symbolList)){
 
-      plot(comp$x[,PCx:PCy], col=as.vector(groupCol$col), pch=20, cex=3,
+      plot(comp$x[,c(PCx,PCy)], col=groupCol$col, pch=20,
            xlim = c(xmin, xmax), ylim = c(ymin, ymax),
            xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
-           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
+           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'), ...)
 
       if(!is.null(rListPredict)){
-        points(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), pch=20, cex=3)
+        points(predicted[,c(PCx,PCy)], col = groupColPredict$col, pch=20, cex=3)
       }
     }
 
     if(plotType == 'points' && !is.null(symbolList)){
 
-      plot(comp$x[,PCx:PCy], col=as.vector(groupCol$col), pch=as.numeric(as.vector(groupCol$symbol)), cex=3,
+      plot(comp$x[,c(PCx,PCy)], col=groupCol$col, pch=as.numeric(groupCol$symbol),
            xlim = c(xmin, xmax), ylim = c(ymin, ymax),
            xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
-           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
+           ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'), ...)
 
       if(!is.null(rListPredict)){
-        points(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), pch=as.numeric(as.vector(groupColPredict$symbol)), cex=3)
+        points(predicted[,c(PCx,PCy)], col = groupColPredict$col, pch = as.numeric(groupColPredict$symbol), cex=3)
+      }
+
+      if(!is.null(pcaListPredict)){
+        points(pcaListPredict[,c(PCx,PCy)], col = pcaColPredict, pch = pcaPopListPredict, cex=3)
       }
 
     }
 
     if(plotType == 'labels'){
 
-      plot(comp$x[,PCx:PCy], col=NA, pch=19,
+      plot(comp$x[,c(PCx,PCy)], col=NA, pch=19,
            xlim = c(xmin, xmax), ylim = c(ymin, ymax),
            xlab=paste('PC',PCx,' (', round(summ$importance[2,PCx]*100, 1), ' %)'),
            ylab=paste('PC',PCy,' (', round(summ$importance[2,PCy]*100, 1), ' %)'))
-      text(comp$x[,PCx], comp$x[,PCy], col=as.vector(groupCol$col), as.character(groupCol$sampleID))
+      text(comp$x[,PCx], comp$x[,PCy], col=groupCol$col, as.character(groupCol$sampleID))
 
       if(!is.null(rListPredict)){
-        text(predicted[,PCx:PCy], col = as.vector(groupColPredict$col), as.character(groupColPredict$sampleID))
+        text(predicted[,c(PCx,PCy)], col = groupColPredict$col, as.character(groupColPredict$sampleID))
       }
     }
 
@@ -355,39 +378,39 @@ patPCA <- function(rList,
         }
       }
 
-      plotHeat(mapMix, rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
+      plotHeat(mapMix/max(abs(xMi)), rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
                adjustCoords = adjustCoords, landList = landList, crop = crop, flipRaster = flipRaster,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA', refImage = refImage)
 
       mtext(paste('min PC', PCx, sep=' '), 1)
 
-      plotHeat(mapMax, rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
+      plotHeat(mapMax/max(abs(xMa)), rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
                adjustCoords = adjustCoords, landList = landList, crop = crop, flipRaster = flipRaster,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA', refImage = refImage)
 
       mtext(paste('max PC', PCx, sep=' '), 1)
 
-      plotHeat(mapMay, rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
+      plotHeat(mapMay/max(abs(yMa)), rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
                adjustCoords = adjustCoords, landList = landList, crop = crop, flipRaster = flipRaster,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA', refImage = refImage)
 
       mtext(paste('max PC', PCy, sep=' '), 2)
 
-      plotHeat(mapMiy, rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
+      plotHeat(mapMiy/max(abs(yMi)), rList, plotCartoon = plotCartoon, refShape = refShape, outline = outline, lines = lines,
                adjustCoords = adjustCoords, landList = landList, crop = crop, flipRaster = flipRaster,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA', refImage = refImage)
 
       mtext(paste('min PC', PCy, sep=' '), 2)
 

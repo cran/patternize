@@ -5,10 +5,22 @@
 \title{Aligns images using \code{\link[RNiftyReg]{niftyreg}} utilities for automated image registration
 and extracts colors using a predefined RGB values and cutoff value.}
 \usage{
-patRegRGB(sampleList, target, RGB, resampleFactor = NULL,
-  useBlockPercentage = 75, colOffset = 0.1, crop = c(0, 0, 0, 0),
-  removebgR = NULL, maskOutline = NULL, plot = FALSE,
-  focal = FALSE, sigma = 3, iterations = 0)
+patRegRGB(
+  sampleList,
+  target,
+  RGB,
+  resampleFactor = NULL,
+  useBlockPercentage = 75,
+  colOffset = 0.1,
+  crop = c(0, 0, 0, 0),
+  removebgR = NULL,
+  maskOutline = NULL,
+  plot = FALSE,
+  focal = FALSE,
+  sigma = 3,
+  iterations = 0,
+  patternsToFile = NULL
+)
 }
 \arguments{
 \item{sampleList}{List of RasterStack objects.}
@@ -46,6 +58,9 @@ original image for each sample ('compare').}
 RGB value for pattern extraction will be iteratively recalculated to be the average of the
 extracted area. This may improve extraction of distinct color pattern, but fail for more
 gradually distributed (in color space) patterns.}
+
+\item{patternsToFile}{Name of directory to which the color pattern of each individual will be
+outputted (default = NULL).}
 }
 \value{
 List of raster objects.

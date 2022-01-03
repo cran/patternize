@@ -5,11 +5,24 @@
 \title{Aligns images usings transformations obtained from fixed landmarks and extracts colors using
 k-means clustering.}
 \usage{
-patLanK(sampleList, landList, k = 3, resampleFactor = NULL,
-  crop = FALSE, cropOffset = c(0, 0, 0, 0), res = 300,
-  transformRef = "meanshape", transformType = "tps",
-  removebgK = NULL, adjustCoords = FALSE, plot = FALSE,
-  focal = FALSE, sigma = 3)
+patLanK(
+  sampleList,
+  landList,
+  k = 3,
+  fixedStartCenter = NULL,
+  resampleFactor = NULL,
+  crop = FALSE,
+  cropOffset = c(0, 0, 0, 0),
+  res = 300,
+  transformRef = "meanshape",
+  transformType = "tps",
+  removebg = NULL,
+  removebgColOffset = 0.1,
+  adjustCoords = FALSE,
+  plot = FALSE,
+  focal = FALSE,
+  sigma = 3
+)
 }
 \arguments{
 \item{sampleList}{List of RasterStack objects.}
@@ -17,6 +30,8 @@ patLanK(sampleList, landList, k = 3, resampleFactor = NULL,
 \item{landList}{Landmark list as returned by \code{\link[patternize]{makeList}}.}
 
 \item{k}{Integere for defining number of k-means clusters (default = 3).}
+
+\item{fixedStartCenter}{Specify a dataframe with start centers for k-means clustering.}
 
 \item{resampleFactor}{Integer for downsampling used by \code{\link{redRes}}.}
 
@@ -37,9 +52,10 @@ to. Can be 'meanshape' for transforming to mean shape of Procrustes analysis.}
 \item{transformType}{Transformation type as used by \code{\link[Morpho]{computeTransform}}
 (default ='tps').}
 
-\item{removebgK}{Integer indicating the range RGB treshold to remove from image (e.g. 100
-removes pixels with average RGB > 100; default = NULL) for k-means analysis. This works only
-to remove a white background.}
+\item{removebg}{Integer or RGB vector indicating the range of RGB threshold to remove from
+image (e.g. 100 removes pixels with average RGB > 100; default = NULL).}
+
+\item{removebgColOffset}{Color offset for color background extraction (default = 0.10).}
 
 \item{adjustCoords}{Adjust landmark coordinates in case they are reversed compared to pixel
 coordinates (default = FALSE).}
@@ -69,7 +85,7 @@ imageList <- makeList(IDlist, 'image', prepath, extension)
 # Note that this example only aligns two images with the target,
 # remove [1:2] to run a full examples.
 rasterList_lanK <- patLanK(imageList[1:2], landmarkList[1:2], k = 4, crop = TRUE,
-res = 100, removebgK = 100, adjustCoords = TRUE, plot = TRUE)
+res = 100, removebg = 100, adjustCoords = TRUE, plot = TRUE)
 }
 
 }

@@ -412,39 +412,39 @@ patRDA <- function(rList,
     if(length(popList) > 2){
       if(plotType == 'points' && is.null(symbolList)){
 
-        plot(pcdata[,PCx:PCy], col=as.vector(groupCol$col), pch=20, cex=3,
+        plot(pcdata[,c(PCx,PCy)], col=groupCol$col, pch=20, cex=3,
              xlim = c(xmin, xmax), ylim = c(ymin, ymax),
              xlab=paste('rda',PCx,' (', round(importance[2,PCx]*100, 1), ' %)'),
              ylab=paste('rda',PCy,' (', round(importance[2,PCy]*100, 1), ' %)'))
 
         if(!is.null(rListPredict)){
-          points(pcdataPredict[,PCx:PCy], col = as.vector(groupColPredict$col), pch=20, cex=3)
+          points(pcdataPredict[,c(PCx,PCy)], col = groupColPredict$col, pch=20, cex=3)
         }
       }
 
       if(plotType == 'points' && !is.null(symbolList)){
 
-        plot(pcdata[,PCx:PCy], col=as.vector(groupCol$col), pch=as.numeric(as.vector(groupCol$symbol)), cex=3,
+        plot(pcdata[,c(PCx,PCy)], col=groupCol$col, pch=as.numeric(groupCol$symbol), cex=3,
              xlim = c(xmin, xmax), ylim = c(ymin, ymax),
              xlab=paste('rda',PCx,' (', round(importance[2,PCx]*100, 1), ' %)'),
              ylab=paste('rda',PCy,' (', round(importance[2,PCy]*100, 1), ' %)'))
 
         if(!is.null(rListPredict)){
-          points(pcdataPredict[,PCx:PCy], col = as.vector(groupColPredict$col), pch=as.numeric(as.vector(groupColPredict$symbol)), cex=3)
+          points(pcdataPredict[,c(PCx,PCy)], col = groupColPredict$col, pch=as.numeric(groupColPredict$symbol), cex=3)
         }
 
       }
 
       if(plotType == 'labels'){
 
-        plot(pcdata[,PCx:PCy], col=NA, pch=19,
+        plot(pcdata[,c(PCx,PCy)], col=NA, pch=19,
              xlim = c(xmin, xmax), ylim = c(ymin, ymax),
              xlab=paste('rda',PCx,' (', round(importance[2,PCx]*100, 1), ' %)'),
              ylab=paste('rda',PCy,' (', round(importance[2,PCy]*100, 1), ' %)'))
-        text(pcdata[,PCx:PCy], col=as.vector(groupCol$col), as.character(groupCol$sampleID))
+        text(pcdata[,c(PCx,PCy)], col=groupCol$col, as.character(groupCol$sampleID))
 
         if(!is.null(rListPredict)){
-          text(pcdataPredict[,PCx:PCy], col = as.vector(groupColPredict$col), as.character(groupColPredict$sampleID))
+          text(pcdataPredict[,c(PCx,PCy)], col = groupColPredict$col, as.character(groupColPredict$sampleID))
         }
       }
     }
@@ -457,7 +457,7 @@ patRDA <- function(rList,
 
       if(plotType == 'points' && is.null(symbolList)){
 
-        plot(pcdata[,1], rep(0, nrow(pcdata)), col=as.vector(groupCol$col), pch=20, cex=3,
+        plot(pcdata[,1], rep(0, nrow(pcdata)), col=groupCol$col, pch=20, cex=3,
              xlim = c(xmin, xmax), ylim = c(0, max(1, d1$y,d2$y)),
              xlab=paste('rda',PCx,' (', round(importance[2,PCx]*100, 1), ' %)'),
              ylab = "Density")
@@ -465,13 +465,13 @@ patRDA <- function(rList,
         polygon(d2, col=adjustcolor(colList[2], alpha.f = 0.2), border=colList[2])
 
         if(!is.null(rListPredict)){
-          points(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = as.vector(groupColPredict$col), pch=20, cex=3)
+          points(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = groupColPredict$col, pch=20, cex=3)
         }
       }
 
       if(plotType == 'points' && !is.null(symbolList)){
 
-        plot(pcdata[,1], rep(0, nrow(pcdata)), col=as.vector(groupCol$col), pch=as.numeric(as.vector(groupCol$symbol)), cex=3,
+        plot(pcdata[,1], rep(0, nrow(pcdata)), col=groupCol$col, pch=as.numeric(groupCol$symbol), cex=3,
              xlim = c(xmin, xmax), ylim = c(0, max(1, d1$y,d2$y)),
              xlab=paste('rda',PCx,' (', round(importance[2,PCx]*100, 1), ' %)'),
              ylab = "Density")
@@ -479,7 +479,7 @@ patRDA <- function(rList,
         polygon(d2, col=adjustcolor(colList[2], alpha.f = 0.2), border=colList[2])
 
         if(!is.null(rListPredict)){
-          points(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = as.vector(groupColPredict$col), pch=as.numeric(as.vector(groupColPredict$symbol)), cex=3)
+          points(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = groupColPredict$col, pch=as.numeric(groupColPredict$symbol), cex=3)
         }
 
       }
@@ -493,10 +493,10 @@ patRDA <- function(rList,
         polygon(d1, col=adjustcolor(colList[1], alpha.f = 0.2), border=colList[1])
         polygon(d2, col=adjustcolor(colList[2], alpha.f = 0.2), border=colList[2])
 
-        text(pcdata[,1], rep(0, nrow(pcdata)), col=as.vector(groupCol$col), as.character(groupCol$sampleID), srt = 45, adj = c(0,0))
+        text(pcdata[,1], rep(0, nrow(pcdata)), col=groupCol$col, as.character(groupCol$sampleID), srt = 45, adj = c(0,0))
 
         if(!is.null(rListPredict)){
-          text(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = as.vector(groupColPredict$col), as.character(groupColPredict$sampleID), srt = 45, adj = c(0,0))
+          text(pcdataPredict[,1], rep(0, nrow(pcdataPredict)), col = groupColPredict$col, as.character(groupColPredict$sampleID), srt = 45, adj = c(0,0))
         }
       }
     }
@@ -521,7 +521,7 @@ patRDA <- function(rList,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA')
 
       mtext(paste('min DF', PCx, sep=' '), 1)
 
@@ -530,7 +530,7 @@ patRDA <- function(rList,
                flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-               ylab=ylab, main=main, plotPCA = TRUE)
+               ylab=ylab, main=main, plotType = 'PCA')
 
       mtext(paste('max DF', PCx, sep=' '), 1)
 
@@ -540,7 +540,7 @@ patRDA <- function(rList,
                  flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                  normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                  cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-                 ylab=ylab, main=main, plotPCA = TRUE)
+                 ylab=ylab, main=main, plotType = 'PCA')
 
         mtext(paste('max DF', PCy, sep=' '), 2)
 
@@ -549,7 +549,7 @@ patRDA <- function(rList,
                  flipOutline = flipOutline, imageList = imageList, cartoonID = cartoonID, colpalette = colpalette,
                  normalized = normalized, cartoonOrder = cartoonOrder, lineOrder = lineOrder, cartoonCol = cartoonCol,
                  cartoonFill = cartoonFill, plotLandmarks = plotLandmarks, landCol = landCol, zlim = zlim, xlab=xlab,
-                 ylab=ylab, main=main, plotPCA = TRUE)
+                 ylab=ylab, main=main, plotType = 'PCA')
 
         mtext(paste('min DF', PCy, sep=' '), 2)
       }

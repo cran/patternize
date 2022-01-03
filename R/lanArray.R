@@ -5,11 +5,15 @@
 #'    coordinates (default = FALSE).
 #' @param imageList List of RasterStacks as returned by \code{\link{makeList}} should be given
 #'    when \code{adjustCoords = TRUE}.
+#' @param imageIDs A list of IDs to match landmarks to images if landmarkList and imageList don't
+#'    have the same length.
 #'
 #' @return  X x Y x n array, where X and Y define the coordinates of the landmark points and n
 #'    is the sample size.
 #'
 #' @examples
+#'
+#' \dontrun{
 #' IDlist <- c('BC0077','BC0071','BC0050','BC0049','BC0004')
 #'
 #' prepath <- system.file("extdata",  package = 'patternize')
@@ -18,13 +22,15 @@
 #' landmarkList <- makeList(IDlist, 'landmark', prepath, extension)
 #'
 #' landmarkArray <- lanArray(landmarkList)
+#' }
 #'
 #' @export
 
 
 lanArray <- function(sampleList,
                      adjustCoords = FALSE,
-                     imageList = NULL){
+                     imageList = NULL,
+                     imageIDs = NULL){
 
   # Make datastructure for Generailzed Procrustis Analysis
   for(n in 1:length(sampleList)){
@@ -40,7 +46,12 @@ lanArray <- function(sampleList,
         stop('For adjusting landmarkcoordinates, you should supply the image list')
       }
 
-      extPicture <- extent(imageList[[n]])
+      if(is.null(imageIDs)){
+        extPicture <- extent(imageList[[n]])
+      }
+      if(!is.null(imageIDs)){
+        extPicture <- extent(imageList[[imageIDs[n]]])
+      }
 
       landmarks[,2] <- (extPicture[4]-landmarks[,2])
     }

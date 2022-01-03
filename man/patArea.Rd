@@ -5,9 +5,20 @@
 \title{This fucntion calculates the area in which the color pattern is expressed in each sample as the
 relative proportion using the provided outline of the considered trait or structure.}
 \usage{
-patArea(rList, IDlist, refShape, type, outline = NULL, landList = NULL,
-  adjustCoords = FALSE, cartoonID = NULL, crop = c(0, 0, 0, 0),
-  flipRaster = NULL, flipOutline = NULL, imageList = NULL)
+patArea(
+  rList,
+  IDlist,
+  refShape,
+  type,
+  outline = NULL,
+  landList = NULL,
+  adjustCoords = FALSE,
+  cartoonID = NULL,
+  crop = c(0, 0, 0, 0),
+  flipRaster = NULL,
+  flipOutline = NULL,
+  imageList = NULL
+)
 }
 \arguments{
 \item{rList}{List of RasterLayers as obtained from the main patternize functions.}
@@ -66,11 +77,11 @@ extension <- '_landmarks_LFW.txt'
 
 landmarkList <- makeList(IDlist, 'landmark', prepath, extension)
 
+\dontrun{
 area_lanRGB <- patArea(rasterList_lanRGB, IDlist, refShape = 'mean', type = 'RGB',
 outline = outline_BC0077, landList = landmarkList, adjustCoords = TRUE,
 imageList = imageList, cartoonID = 'BC0077')
 
-\dontrun{
 area_regRGB <- patArea(rasterList_regRGB, IDlist, refShape = 'target', type = 'RGB',
 outline = outline_BC0077, crop = c(100,400,40,250), adjustCoords = TRUE,
 imageList = imageList, cartoonID = 'BC0077', flipRaster = 'xy')

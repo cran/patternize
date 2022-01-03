@@ -4,6 +4,7 @@
 #' @param sampleList List of RasterStack objects.
 #' @param target Image imported as RasterStack used as target for registration.
 #' @param k Integere for defining number of k-means clusters (default = 3).
+#' @param fixedStartCenter Specify a dataframe with start centers for k-means clustering.
 #' @param resampleFactor Integer for downsampling used by \code{\link{redRes}} (default = NULL).
 #' @param useBlockPercentage Block percentage as used in \code{\link[RNiftyReg]{niftyreg}}
 #'    (default = 75).
@@ -43,6 +44,7 @@
 patRegK <- function(sampleList,
                     target,
                     k = 3,
+                    fixedStartCenter = NULL,
                     resampleFactor = NULL,
                     useBlockPercentage = 75,
                     crop = c(0,0,0,0),
@@ -131,16 +133,26 @@ patRegK <- function(sampleList,
 
     # k-means clustering of image
 
-    if(n==1){
+    if(n==1 & is.null(fixedStartCenter)){
       startCenter = NULL
     }
 
-    else{
-      startCenter <- K$centers
+    if(!is.null(fixedStartCenter)){
+      startCenter <- fixedStartCenter
+      print(paste('Fixed centers:', startCenter, sep = ' '))
     }
 
+    # else{
+    #   startCenter <- K$centers
+    # }
+
     if(is.null(removebgK)){
-      imageKmeans <- kImage(raster::as.array(transRaster), k, startCenter)
+      imageKmeans <- tryCatch(kImage(raster::as.array(transRaster), k, startCenter),
+                              error = function(err) {
+                                print(paste('sample', names(sampleList)[n], 'k-clustering failed and skipped', sep = ' '))
+                                return(NULL)
+                                })
+      if(is.null(imageKmeans)){next}
     }
 
     if(is.numeric(removebgK)){
@@ -152,15 +164,27 @@ patRegK <- function(sampleList,
       raster::extent(toMaskR) <- raster::extent(transRaster)
 
       transRaster<-raster::mask(transRaster, toMaskR)
-      transRaster[is.na(transRaster)] <- 0
+      transRaster[is.na(transRaster)] <- NA
 
-      imageKmeans <- kImage(raster::as.array(transRaster), k, startCenter)
+      imageKmeans <- tryCatch(kImage(raster::as.array(transRaster), k, startCenter),
+                              error = function(err) {
+                                print(paste('sample', names(sampleList)[n], 'k-clustering failed and skipped', sep = ' '))
+                                return(NULL)
+                              })
+      if(is.null(imageKmeans)){next}
     }
 
     image.segmented <- imageKmeans[[1]]
     K <- imageKmeans[[2]]
 
+    if(n==1 & is.null(fixedStartCenter)){
+      startCenter <- K$centers
+      print('start centers of first image:')
+      print(startCenter)
+    }
+
     if(plot){
+      image.segmented[is.na(image.segmented)] <- 0
       x <- image.segmented/255
       cols <- rgb(x[,,1], x[,,2], x[,,3], maxColorValue=1)
       uniqueCols <- unique(cols)
@@ -169,7 +193,7 @@ patRegK <- function(sampleList,
       raster::image(t(apply(x2,2,rev)), col=uniqueCols,yaxt='n', xaxt='n')
     }
 
-    print(names(sampleList)[n])
+    # print(names(sampleList)[n])
 
     # Transform images and add to rasterList
 

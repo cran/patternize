@@ -4,8 +4,17 @@
 \alias{colorChecker}
 \title{Calibrate images using ColorChecker.}
 \usage{
-colorChecker(IDlist, prepath = NULL, extension = NULL,
-  patchSize = 0.6)
+colorChecker(
+  IDlist,
+  prepath = NULL,
+  extension = NULL,
+  colorCheckerType = "X-Rite",
+  fixedCorners = FALSE,
+  patchSize = 0.6,
+  colorCheckerXY = NULL,
+  fixedModel = NULL,
+  resampleFactor = NULL
+)
 }
 \arguments{
 \item{IDlist}{List of sample IDs.}
@@ -14,8 +23,23 @@ colorChecker(IDlist, prepath = NULL, extension = NULL,
 
 \item{extension}{Extension (default = NULL).}
 
+\item{colorCheckerType}{Type of colorChecker. Options are 'X-Rite ' and 'ColorGauge Micro
+Analyzer' (default = 'X-Rite ').}
+
+\item{fixedCorners}{Specify whether to set the coordinates of the colorChecker corners
+for every image (default = FALSE).}
+
 \item{patchSize}{Proportion of ColorChecker patch that will be used for observed RGB values
-(default = NULL).}
+(default = 0.6).}
+
+\item{colorCheckerXY}{Landmark list of colorChecker corners as returned
+by \code{\link[patternize]{makeList}}. The image will not be plotted.}
+
+\item{fixedModel}{Precalculated model to adjust colors. Should be a listof a model for R, G
+and B (the colorChecker function gives as output such a list obtained from the last image
+in the analysis).}
+
+\item{resampleFactor}{Integer for downsampling used by \code{\link{redRes}}.}
 }
 \value{
 Calibrated image(s) ('filename_calibrated.jpg')

@@ -5,11 +5,27 @@
 \title{Aligns images usings transformations obtained from fixed landmarks and extracts colors
 using a predefined RGB values and cutoff value.}
 \usage{
-patLanRGB(sampleList, landList, RGB, resampleFactor = NULL,
-  colOffset = 0.1, crop = FALSE, cropOffset = c(0, 0, 0, 0),
-  res = 300, transformRef = "meanshape", transformType = "tps",
-  adjustCoords = FALSE, plot = NULL, focal = FALSE, sigma = 3,
-  iterations = 0)
+patLanRGB(
+  sampleList,
+  landList,
+  RGB = NULL,
+  sampleRGB = FALSE,
+  sampleRGBtype = "point",
+  resampleFactor = NULL,
+  colOffset = 0.1,
+  crop = FALSE,
+  cropOffset = c(0, 0, 0, 0),
+  res = 300,
+  transformRef = "meanshape",
+  transformType = "tps",
+  adjustCoords = FALSE,
+  plot = NULL,
+  focal = FALSE,
+  sigma = 3,
+  iterations = 0,
+  imageIDs = NULL,
+  patternsToFile = NULL
+)
 }
 \arguments{
 \item{sampleList}{List of RasterStack objects.}
@@ -17,6 +33,11 @@ patLanRGB(sampleList, landList, RGB, resampleFactor = NULL,
 \item{landList}{Landmark list as returned by \code{\link[patternize]{makeList}}.}
 
 \item{RGB}{RGB values for color pattern extraction specified as vector.}
+
+\item{sampleRGB}{Whether to set RGB for each image manually.}
+
+\item{sampleRGBtype}{Whether to pick a point or area (defined by left bottom and top right)
+for sampleRGB.}
 
 \item{resampleFactor}{Integer for downsampling used by \code{\link{redRes}}.}
 
@@ -51,6 +72,12 @@ original image for each sample ('compare').}
 \item{sigma}{Size of sigma for Gaussian blurring (default = 3).}
 
 \item{iterations}{Number of iterations for recalculating average color.}
+
+\item{imageIDs}{A list of IDs to match landmarks to images if landmarkList and imageList don't
+have the same length.}
+
+\item{patternsToFile}{Name of directory to which the color pattern of each individual will be
+outputted (default = NULL).}
 }
 \value{
 List of raster objects.

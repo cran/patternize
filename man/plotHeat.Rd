@@ -4,14 +4,40 @@
 \alias{plotHeat}
 \title{Plots the color pattern heatmaps from \code{sumRaster} output.}
 \usage{
-plotHeat(summedRaster, IDlist, colpalette = NULL, plotCartoon = FALSE,
-  refShape = NULL, outline = NULL, lines = NULL, landList = NULL,
-  adjustCoords = FALSE, cartoonID = NULL, normalized = FALSE,
-  crop = c(0, 0, 0, 0), flipRaster = NULL, flipOutline = NULL,
-  imageList = NULL, cartoonOrder = "above", lineOrder = "above",
-  cartoonCol = "gray", cartoonFill = NULL, plotLandmarks = FALSE,
-  landCol = "black", zlim = c(0, 1), legendTitle = "Proportion",
-  xlab = "", ylab = "", main = "", plotPCA = FALSE)
+plotHeat(
+  summedRaster,
+  IDlist,
+  colpalette = NULL,
+  plotCartoon = FALSE,
+  refShape = NULL,
+  outline = NULL,
+  lines = NULL,
+  landList = NULL,
+  adjustCoords = FALSE,
+  cartoonID = NULL,
+  normalized = FALSE,
+  crop = c(0, 0, 0, 0),
+  flipRaster = NULL,
+  flipOutline = NULL,
+  imageList = NULL,
+  refImage = NULL,
+  cartoonOrder = "above",
+  lineOrder = "above",
+  cartoonCol = "gray",
+  cartoonFill = NULL,
+  plotLandmarks = FALSE,
+  landCol = "black",
+  zlim = c(0, 1),
+  legend = TRUE,
+  legendTitle = "Proportion",
+  legend.side = 4,
+  xlab = "",
+  ylab = "",
+  main = "",
+  plotType = "multi",
+  imageIDs = NULL,
+  format = "imageJ"
+)
 }
 \arguments{
 \item{summedRaster}{Summed raster or summedRasterList.}
@@ -52,6 +78,8 @@ between raster and outline coordinates).}
 \item{imageList}{List of images should be given if one wants to flip the outline or adjust
 landmark coordinates.}
 
+\item{refImage}{Image (RasterStack) used for target. Use raster::stack('filename').}
+
 \item{cartoonOrder}{Whether to plot the cartoon outline 'above' or 'under' the pattern raster
 (default = 'above'). Set to 'under' for filled outlines.}
 
@@ -69,7 +97,11 @@ landmarks (default = FALSE).}
 
 \item{zlim}{z-axis limit (default = c(0,1))}
 
+\item{legend}{Whether to plot legend with heatmaps.}
+
 \item{legendTitle}{Title of the raster legend (default = 'Proportion')}
+
+\item{legend.side}{Side to plot legend (default = 4)}
 
 \item{xlab}{Optional x-axis label.}
 
@@ -77,8 +109,14 @@ landmarks (default = FALSE).}
 
 \item{main}{Optional main title.}
 
-\item{plotPCA}{Set as TRUE when visualizing shape changes along PCA axis in \
-code{\link[patternize]{patPCA}}.}
+\item{plotType}{Set as 'PCA' when visualizing shape changes along PCA axis in \
+code{\link[patternize]{patPCA}}, as 'one' when visualizing single image or as 'multi' for multi
+plotting or when setting customized margins (default = 'multi').}
+
+\item{imageIDs}{A list of IDs to match landmarks to images if landmarkList and imageList don't
+have the same length.}
+
+\item{format}{ImageJ (Fiji) or tps format (default = 'imageJ').}
 }
 \description{
 Plots the color pattern heatmaps from \code{sumRaster} output.
@@ -96,7 +134,7 @@ data(imageList)
 
 plotHeat(summedRaster_regRGB, IDlist, plotCartoon = TRUE, refShape = 'target',
 outline = outline_BC0077, lines = lines_BC0077, crop = c(100,400,40,250),
-flipRaster = 'xy', imageList = imageList, cartoonOrder = 'under',
+flipRaster = 'xy', imageList = imageList, cartoonOrder = 'under', cartoonID = 'BC0077',
 cartoonFill = 'black', main = 'registration_example')
 
 \dontrun{

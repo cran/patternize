@@ -23,6 +23,7 @@
 #' @param flipOutline Whether to flip plot along x, y or xy axis.
 #' @param imageList List of images should be given if one wants to flip the outline or adjust
 #'    landmark coordinates.
+#' @param refImage Image (RasterStack) used for target. Use raster::stack('filename').
 #' @param cartoonOrder Whether to plot the cartoon outline 'above' or 'under' the pattern raster
 #'    (default = 'above'). Set to 'under' for filled outlines.
 #' @param lineOrder Whether to plot the cartoon lines 'above' or 'under' the pattern raster
@@ -33,12 +34,18 @@
 #'    landmarks (default = FALSE).
 #' @param landCol Color for ploting landmarks (default = 'black').
 #' @param zlim z-axis limit (default = c(0,1))
+#' @param legend Whether to plot legend with heatmaps.
 #' @param legendTitle Title of the raster legend (default = 'Proportion')
+#' @param legend.side Side to plot legend (default = 4)
 #' @param xlab Optional x-axis label.
 #' @param ylab Optional y-axis label.
 #' @param main Optional main title.
-#' @param plotPCA Set as TRUE when visualizing shape changes along PCA axis in \
-#'    code{\link[patternize]{patPCA}}.
+#' @param plotType Set as 'PCA' when visualizing shape changes along PCA axis in \
+#'    code{\link[patternize]{patPCA}}, as 'one' when visualizing single image or as 'multi' for multi
+#'    plotting or when setting customized margins (default = 'multi').
+#' @param imageIDs A list of IDs to match landmarks to images if landmarkList and imageList don't
+#'    have the same length.
+#' @param format ImageJ (Fiji) or tps format (default = 'imageJ').
 #'
 #' @examples
 #' data(rasterList_lanRGB)
@@ -53,7 +60,7 @@
 #'
 #' plotHeat(summedRaster_regRGB, IDlist, plotCartoon = TRUE, refShape = 'target',
 #' outline = outline_BC0077, lines = lines_BC0077, crop = c(100,400,40,250),
-#' flipRaster = 'xy', imageList = imageList, cartoonOrder = 'under',
+#' flipRaster = 'xy', imageList = imageList, cartoonOrder = 'under', cartoonID = 'BC0077',
 #' cartoonFill = 'black', main = 'registration_example')
 #'
 #' \dontrun{
@@ -118,6 +125,7 @@ plotHeat <- function(summedRaster,
                      flipRaster = NULL,
                      flipOutline = NULL,
                      imageList = NULL,
+                     refImage = NULL,
                      cartoonOrder = 'above',
                      lineOrder = 'above',
                      cartoonCol = 'gray',
@@ -125,22 +133,79 @@ plotHeat <- function(summedRaster,
                      plotLandmarks = FALSE,
                      landCol = 'black',
                      zlim = c(0,1),
+                     legend = TRUE,
                      legendTitle = 'Proportion',
+                     legend.side = 4,
                      xlab='',
                      ylab='',
                      main='',
-                     plotPCA = FALSE){
+                     plotType = 'multi',
+                     imageIDs = NULL,
+                     format = 'imageJ'){
+
+
 
   if(!is.list(summedRaster)){
-
     rasterEx <- raster::extent(summedRaster)
-
+  }
+  else{
+    rasterEx <- raster::extent(summedRaster[[1]])
   }
 
+  if(is.null(cartoonID)){
+    if(!is.list(summedRaster)){
+      imageEx <- raster::extent(summedRaster)
+    }
+    else{
+      imageEx <- raster::extent(summedRaster[[1]])
+    }
+  }
   else{
+    if(cartoonID %in% names(imageList)){
+      imageEx <- raster::extent(imageList[[cartoonID]])
+    }
+    else{
+      imageEx <- raster::extent(imageList[[1]])
+    }
+  }
 
-    rasterEx <- raster::extent(summedRaster[[1]])
+  exDiff <- abs(rasterEx[4]-imageEx[4])-rasterEx[3]
+  outline[,2] <- outline[,2] + exDiff
 
+  if(!is.null(lines)){
+
+    lineList <- list()
+
+    for(e in 1:length(lines)){
+
+      lineList[[e]] <- read.table(lines[e], header = FALSE)
+
+    }
+  }
+
+  if(!is.null(lines)){
+    for(e in 1:length(lineList)){
+
+      lineList[[e]][[2]] <- lineList[[e]][[2]] + exDiff
+    }
+  }
+
+  if(!is.null(cartoonID)){
+    if(cartoonID %in% names(imageList)){
+      imageExRef <- raster::extent(imageList[[cartoonID]])
+    }
+  }
+  else if(!is.null(refImage)){
+    imageExRef <- raster::extent(refImage)
+  }
+  else{
+    if(plotCartoon != FALSE){
+      stop("if cartoonID not in image list, please provide image to refImage argument.")
+    }
+  }
+
+  if(format == 'tps'){
+    outline[,2] <- (imageExRef[4]-outline[,2])
   }
 
   if(is.null(colpalette)){
@@ -161,16 +226,6 @@ plotHeat <- function(summedRaster,
 
   }
 
-  if(!is.null(lines)){
-
-    lineList <- list()
-
-    for(e in 1:length(lines)){
-
-      lineList[[e]] <- read.table(lines[e], header = FALSE)
-
-    }
-  }
 
   if(normalized){
     divide <- 1
@@ -181,7 +236,6 @@ plotHeat <- function(summedRaster,
 
   if(!is.null(flipOutline) || !is.null(flipRaster)){
 
-    imageEx <- raster::extent(imageList[[1]])
 
     if(refShape[1] != 'mean' && !is.matrix(refShape)){
 
@@ -293,11 +347,19 @@ plotHeat <- function(summedRaster,
   if(plotCartoon && refShape[1] != 'target'){
 
     indx <- which(names(imageList) == cartoonID)
-    invisible(capture.output(landArray <- lanArray(landList, adjustCoords, imageList)))
+    invisible(capture.output(landArray <- lanArray(landList, adjustCoords, imageList, imageIDs = imageIDs)))
+
+    if(is.character(refShape)){
+      indx <- which(names(landList) == cartoonID)
+      transRefLan <- as.matrix(lanArray[,,indx])
+    }
+    else{
+      transRefLan <- refShape
+    }
 
     if(is.matrix(refShape)){
       invisible(capture.output(cartoonLandTrans <- Morpho::computeTransform(refShape,
-                                                                            as.matrix(landArray[,,indx]),
+                                                                            as.matrix(transRefLan),
                                                                             type="tps")))
     }
 
@@ -308,7 +370,7 @@ plotHeat <- function(summedRaster,
       refShape <- transformed$mshape
 
       invisible(capture.output(cartoonLandTrans <- Morpho::computeTransform(refShape,
-                                                                            as.matrix(landArray[,,indx]),
+                                                                            as.matrix(transRefLan),
                                                                             type="tps")))
     }
 
@@ -391,7 +453,7 @@ plotHeat <- function(summedRaster,
       YLIM <- c(rasterEx[3],rasterEx[4])
     }
     else{
-      if(refShape[1] == 'target'){
+      if(refShape[1] == 'target' || is.matrix(refShape)){
         XLIM <- c(min(outline[,1]),max(outline[,1]))
         YLIM <- c(min(outline[,2]),max(outline[,2]))
       }
@@ -410,10 +472,10 @@ plotHeat <- function(summedRaster,
       }
     }
 
-    if(!plotPCA){
+    if(plotType == 'one'){
       par(mfrow = c(1,1), mai=c(0.05,0.8,0.15,0.8), oma=c(1,1,1,1)+1)
     }
-    else{
+    if(plotType == 'PCA'){
       par(mar=c(4,4,2,2))
     }
 
@@ -476,14 +538,20 @@ plotHeat <- function(summedRaster,
     }
 
 
-    if(plotPCA){
-      image(summedRaster/divide, col=colfunc(21), xaxt='n', yaxt='n', box=F, axes=F,
+    if(plotType == 'PCA'){
+
+      image(summedRaster/divide, col=colfunc(99), xaxt='n', yaxt='n', box=F, axes=F,
             xlim = XLIM, ylim= YLIM, zlim=zlim, add= TRUE, useRaster= FALSE, legend = FALSE, asp=1)
     }
     else{
-      plot(summedRaster/divide, col=colfunc(21), xaxt='n', yaxt='n', box=F, axes=F,
+
+      plot(summedRaster/divide, col=colfunc(99), xaxt='n', yaxt='n', box=F, axes=F,
            xlim = XLIM, ylim= YLIM, zlim=zlim, add= TRUE, useRaster= FALSE, legend = FALSE, asp=1)
-      plot(summedRaster/divide, legend.only=TRUE, zlim=zlim, col=colfunc(21),legend.width=1, legend.shrink=0.75, legend.args=list(text=legendTitle, side=4, font=2, line=2.5, cex=1))
+
+      if(legend == TRUE){
+        plot(summedRaster/divide, legend.only=TRUE, zlim=zlim, col=colfunc(99),legend.width=1, legend.shrink=0.75,
+             legend.args=list(text=legendTitle, side=legend.side, font=2, line=2.5, cex=1))
+        }
       }
     mtext(side = 1, text = xlab, line = 0)
     mtext(side = 2, text = ylab, line = 0)
@@ -545,11 +613,12 @@ plotHeat <- function(summedRaster,
       YLIM <- c(rasterEx[3],rasterEx[4])
     }
     else{
-      if(refShape[1] == 'target'){
+      if(refShape[1] == 'target' || is.matrix(refShape)){
         XLIM <- c(min(outline[,1]),max(outline[,1]))
         YLIM <- c(min(outline[,2]),max(outline[,2]))
       }
     }
+
 
     par(mfrow=c(2,trunc((length(summedRaster)+1)/2)), mai=c(0.05,0.8,0.15,0.8), oma=c(1,1,1,1)+1)
 
@@ -627,8 +696,8 @@ plotHeat <- function(summedRaster,
         }
       }
 
-      plot(summedRaster[[k]]/divide, col=colfunc(21), xaxt='n', yaxt='n', box=F, axes=F,
-           xlim = XLIM, ylim= YLIM, zlim=zlim, legend.args=list(text=legendTitle, side=4, line=3),
+      plot(summedRaster[[k]]/divide, col=colfunc(99), xaxt='n', yaxt='n', box=F, axes=F,
+           xlim = XLIM, ylim= YLIM, zlim=zlim, legend.args=list(text=legendTitle, side=legend.side, line=3),
            add= TRUE, asp=1)
 
       mtext(side = 1, text = xlab, line = 0)

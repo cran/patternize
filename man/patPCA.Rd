@@ -10,17 +10,50 @@ are predicted by multiplying the rotation matrix (eigenvectors) with a vector th
 the same length as the number of rows in the rotation matrix and in which all values are
 set to zero except for the PC value for which we want to predict the pixel values.}
 \usage{
-patPCA(rList, popList, colList, symbolList = NULL, rListPredict = NULL,
-  popListPredict = NULL, colListPredict = NULL,
-  symbolListPredict = NULL, plot = FALSE, plotType = "points",
-  plotChanges = FALSE, PCx = 1, PCy = 2, plotCartoon = FALSE,
-  refShape = NULL, outline = NULL, lines = NULL, landList = NULL,
-  adjustCoords = FALSE, crop = c(0, 0, 0, 0), flipRaster = NULL,
-  flipOutline = NULL, imageList = NULL, cartoonID = NULL,
-  colpalette = NULL, normalized = NULL, cartoonOrder = "above",
-  lineOrder = "above", cartoonCol = "gray", cartoonFill = NULL,
-  plotLandmarks = FALSE, landCol = "black", zlim = c(-1, 1),
-  legendTitle = "Predicted", xlab = "", ylab = "", main = "")
+patPCA(
+  rList,
+  popList,
+  colList,
+  symbolList = NULL,
+  rListPredict = NULL,
+  popListPredict = NULL,
+  colListPredict = NULL,
+  pcaListPredict = NULL,
+  pcaPopListPredict = NULL,
+  pcaColPredict = "red",
+  symbolListPredict = NULL,
+  plot = FALSE,
+  plotType = "points",
+  plotChanges = FALSE,
+  PCx = 1,
+  PCy = 2,
+  plotCartoon = FALSE,
+  refShape = NULL,
+  outline = NULL,
+  lines = NULL,
+  landList = NULL,
+  adjustCoords = FALSE,
+  crop = c(0, 0, 0, 0),
+  flipRaster = NULL,
+  flipOutline = NULL,
+  imageList = NULL,
+  cartoonID = NULL,
+  refImage = NULL,
+  colpalette = NULL,
+  normalized = NULL,
+  cartoonOrder = "above",
+  lineOrder = "above",
+  cartoonCol = "gray",
+  cartoonFill = NULL,
+  plotLandmarks = FALSE,
+  landCol = "black",
+  zlim = c(-1, 1),
+  legendTitle = "Predicted",
+  xlab = "",
+  ylab = "",
+  main = "",
+  ...
+)
 }
 \arguments{
 \item{rList}{List of raster objects.}
@@ -37,6 +70,12 @@ patPCA(rList, popList, colList, symbolList = NULL, rListPredict = NULL,
 (default = NULL). Note to that this also has to be a list if only one population is included.}
 
 \item{colListPredict}{List of colors for each set of predict samples (default = NULL).}
+
+\item{pcaListPredict}{Points to plot within PCA space.}
+
+\item{pcaPopListPredict}{List of population symbols for plotting additional PCA values.}
+
+\item{pcaColPredict}{Color for additional PCA values.}
 
 \item{symbolListPredict}{List with graphical plotting symbols for predict sets (default = NULL).}
 
@@ -78,6 +117,8 @@ landmark coordinates.}
 
 \item{cartoonID}{ID of the sample for which the cartoon was drawn.}
 
+\item{refImage}{Image (RasterStack) used for target. Use raster::stack('filename').}
+
 \item{colpalette}{Vector of colors for color palette
 (default = c("white","lightblue","blue","green", "yellow","red"))}
 
@@ -108,6 +149,8 @@ landmarks (default = FALSE).}
 \item{ylab}{Optional y-axis label.}
 
 \item{main}{Optional main title.}
+
+\item{...}{additional arguments for PCA plot function.}
 }
 \value{
 If plot = TRUE: List including a [1] dataframe of the binary raster values that can be used for
