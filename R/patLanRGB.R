@@ -138,9 +138,9 @@ patLanRGB <- function(sampleList,
       landm <- lanArray[,,n]
 
       extRaster <- raster::extent(min(landm[,1])-min(landm[,1])*cropOffset[1]/100,
-                                  max(landm[,1])+max(landm[,1])*cropOffset[2]/100,
+                                  max(landm[,1])+(extRasterOr[2]-max(landm[,1]))*cropOffset[2]/100,
                                   min(landm[,2])-min(landm[,2])*cropOffset[3]/100,
-                                  max(landm[,2])+max(landm[,2])*cropOffset[4]/100)
+                                  max(landm[,2])+(extRasterOr[4]-max(landm[,2]))*cropOffset[4]/100)
 
       imageC <- raster::crop(image, extRaster)
 
@@ -213,12 +213,12 @@ patLanRGB <- function(sampleList,
 
       r <- raster::raster(ncol = res, nrow = res)
 
-      if(transformRef == 'meanshape' || is.matrix(transformRef)){
+      if(any(c(transformRef == 'meanshape', is.matrix(transformRef)))){
 
-        raster::extent(r) <- raster::extent(min(refShape[,1])-3*max(refShape[,1])*cropOffset[3]/100,
-                                            max(refShape[,1])+3*max(refShape[,1])*cropOffset[4]/100,
-                                            min(refShape[,2])-3*max(refShape[,2])*cropOffset[1]/100,
-                                            max(refShape[,2])+3*max(refShape[,2])*cropOffset[2]/100)
+        raster::extent(r) <- raster::extent(min(refShape[,1])-min(refShape[,1])*cropOffset[1]/100,
+                                            max(refShape[,1])+max(refShape[,1])*cropOffset[2]/100,
+                                            min(refShape[,2])-min(refShape[,2])*cropOffset[3]/100,
+                                            max(refShape[,2])+max(refShape[,2])*cropOffset[4]/100)
       }
 
       else{
@@ -245,15 +245,15 @@ patLanRGB <- function(sampleList,
     if(plot == 'stack'){
 
       par(mfrow=c(1,1))
-      if(n == 1 | sampleRGB){
+      if(any(c(n == 1, sampleRGB))){
         plot(1, type="n", xlab='', ylab='', xaxt='n', yaxt='n', axes= FALSE, bty='n')
       }
 
       par(new = TRUE)
 
-      if(transformRef == 'meanshape' || is.matrix(transformRef)){
+      if(any(c(transformRef == 'meanshape', is.matrix(transformRef)))){
 
-          patternRasterP <- raster::flip(t(patternRaster), 'y')
+          patternRasterP <- raster::flip(patternRaster, 'y')
       }
 
       else{
@@ -295,7 +295,7 @@ patLanRGB <- function(sampleList,
     print(paste('sample', names(landList)[n], 'done and added to rasterList', sep=' '))
   }
 
-  if(plot == 'compare' | sampleRGB){
+  if(any(c(plot == 'compare', sampleRGB))){
     for(e in 1:length(rasterList)){
       if(e == 1){
         plot(1, type="n", xlab='', ylab='', xaxt='n', yaxt='n', axes= FALSE, bty='n')
