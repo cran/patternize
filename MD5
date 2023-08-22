@@ -1,4 +1,4 @@
-0c1f92593dc3f0688406207ce9fdfcd9 *DESCRIPTION
+7e38041fd831df7eaa2575dbe8c0cc57 *DESCRIPTION
 85b72bd8bf2c4530a0779cee55513ff4 *NAMESPACE
 72edf8debec94afc391678389c104064 *R/GMMImage.R
 3407510ecab713974daa3a078e5e01a3 *R/alignLan.R
@@ -31,7 +31,7 @@ c4bab13ef91944c554c8c00e9bc419cf *R/patLanK_HSV.R
 2c45495049a67ecb8e07e04eb4797038 *R/patRegK_HSV.R
 d6a696fd187ac7da0c31abeaca60a6ff *R/patRegRGB.R
 ece552a63d73c88870e5b9a7aef6dbfd *R/patRegW.R
-b4d44485bc2254dc3d76bea9e149322f *R/patternize.R
+826a8c0dc20e894861b55d2b45ada646 *R/patternize.R
 677e9ff36d85d71286edb6d519f271a1 *R/plotHeat.R
 c462df535b7491402f02055b769d013f *R/plotRasterStackAsImage.R
 c8c30414f4fd12da6346ef069fc5105c *R/redRes.R
@@ -102,7 +102,7 @@ be6a6c2336df958f9a6d2896305fcc52 *man/patRDA.Rd
 e74df39fa21eb364c010ee49102b8ca0 *man/patRegK_HSV.Rd
 9e1ff50b9accf132afbef64785ce5a57 *man/patRegRGB.Rd
 b8d56a84b82bdb34b43cb05d760efb23 *man/patRegW.Rd
-c699ecaa7b3b6f05ee4e9a81b85f8b25 *man/patternize.Rd
+92d73a8e090b246effed758aa30ae821 *man/patternize.Rd
 65b4ecdea90b9468e2ce49bea6412d77 *man/plotHeat.Rd
 e06dc4c72967f3668c43f528f72e457d *man/plotRasterstackAsImage.Rd
 ad5c7279a3914757d37c6fa65e2d8cc1 *man/rasterList_lanK.Rd
